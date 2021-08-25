@@ -1,0 +1,59 @@
+package main
+
+import (
+	"encoding/binary"
+	"encoding/json"
+	"log"
+	"time"
+
+	"github.com/goburrow/modbus"
+	"github.com/nsqio/go-nsq"
+)
+
+var (
+	allData = make(map[string]float64)
+	client  = modbus.TCPClient("10.50.0.17:502")
+	config  = nsq.NewConfig()
+)
+
+func set(key string, value float64) {
+	allData[key] = value
+}
+
+func periodicFunc(tick time.Time) {
+
+	nums := [100]float64{}
+	for i := 70; i < 79; i++ {
+		result, err := client.ReadInputRegisters(uint16(i), 4)
+		value := binary.BigEndian.Uint16(result)
+		nums[i] = float64(value) / 10
+		if err != nil {
+			log.Fatalf("%v", err)
+		}
+	}
+	id := []string{"T_heater", "T_out", "T_separ", "T_in", "Flow", "Electro", "T_led", "T3'", "Level"}
+	data := nums[70:79]
+	for i := range id {
+		set(id[i], data[i])
+	}
+
+	p, err := nsq.NewProducer("127.0.0.1:4150", config)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	payload, err := json.Marshal(allData)
+	if err != nil {
+		log.Println(err)
+	}
+	err = p.Publish("My_NSQ_Topic", payload)
+	if err != nil {
+		log.Panic(err)
+	}
+}
+
+func main() {
+	for t := range time.NewTicker(1 * time.Second).C {
+		periodicFunc(t)
+	}
+}
