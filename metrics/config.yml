@@ -1,0 +1,9 @@
+production:
+  prometheus:
+    variables: temp_separ,temp_heater
+    port: :2112
+    tab: /metrics
+  nsq:
+    nsq_address: 127.0.0.1:4150
+  
+    

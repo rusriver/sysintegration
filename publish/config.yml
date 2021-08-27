@@ -1,0 +1,10 @@
+production:
+  weintek:
+    ip: 10.50.0.17:502
+    variables: T_heater,T_out,T_separ,T_in,Flow,Electro,T_led,T3_,Level
+    start_bit: 70
+    stop_bit: 79
+  nsq:
+    producer: 127.0.0.1:4150
+  
+    

@@ -1,0 +1,79 @@
+version: '3'
+services:
+  nsqlookupd:
+    image: nsqio/nsq
+    command: /nsqlookupd
+    ports:
+      - "4160"
+      - "4161"
+  nsqd:
+    image: nsqio/nsq
+    command: /nsqd --lookupd-tcp-address=nsqlookupd:4160
+    depends_on:
+      - nsqlookupd
+    ports:
+      - "4150"
+      - "4151"
+  nsqadmin:
+    image: nsqio/nsq
+    command: /nsqadmin --lookupd-http-address=nsqlookupd:4161
+    depends_on:
+      - nsqlookupd  
+    ports:
+      - "4171"
+
+
+version: "3.5"
+services:
+  nats:
+    image: nats
+    ports:
+      - "8222:8222"
+    networks: ["nats"]
+  nats-1:
+    image: nats
+    command: "--cluster nats://0.0.0.0:6222 --routes=nats://ruser:T0pS3cr3t@nats:6222"
+    networks: ["nats"]
+    depends_on: ["nats"]
+  nats-2:
+    image: nats
+    command: "--cluster nats://0.0.0.0:6222 --routes=nats://ruser:T0pS3cr3t@nats:6222"
+    networks: ["nats"]
+    depends_on: ["nats"]
+
+networks:
+  nats:
+    name: nats
+
+version: '3'
+
+services:
+prometheus:
+image: prom/prometheus:v2.21.0
+ports:
+- 9000:9090
+volumes:
+- ./prometheus:/etc/prometheus
+- prometheus-data:/prometheus
+command: --web.enable-lifecycle --config.file=/etc/prometheus/prometheus.yml
+
+grafana:
+image: grafana/grafana:$GRAFANA_VERSION
+environment:
+GF_SECURITY_ADMIN_USER: $GRAFANA_ADMIN_USER
+GF_SECURITY_ADMIN_PASSWORD: $GRAFANA_ADMIN_PASSWORD
+ports:
+- 3000:3000
+volumes:
+- grafana-storage:/var/lib/grafana
+depends_on:
+- prometheus
+networks:
+- internal
+
+networks:
+internal:
+
+volumes:
+prometheus-data:
+grafana-storage:

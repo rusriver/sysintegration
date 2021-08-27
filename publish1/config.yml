@@ -1,0 +1,11 @@
+development:
+  database:
+    host: localhost
+  users:
+    - name: calvin
+      password: yukon
+    - name: hobbes
+      password: tuna
+production:
+  weintek:
+    host: 10.50.0.17:502
